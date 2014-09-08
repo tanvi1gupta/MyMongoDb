@@ -1,0 +1,103 @@
+Q1 DONE
+ db.messages.aggregate([{$match :{$and :[{"headers.To":"jeff.skilling@enron.com"}, {"headers.From":"andrew.fastow@enron.com"}] }}, {$group:{_id:1, count:{$sum:1}}}])
+Q2: unwind then addtoset unwind again and then group by sender and receiver
+DONE
+
+
+db.messages.aggregate([ {$unwind: "$headers.To"}, {$group: {_id: "$headers.From", "TO" :{"$addToSet": "$headers.To"}} } , {$unwind: "$headers.To"}, 
+{$group :{_id :{"to":"$headers.To", "from":"$_id"}, count:{$sum:1}}}  , {$limit:1}])
+
+need to grop on the basis of msg and sender and regroup the receivers..then unwind again..this has all unique recepients for a msg..now regroup for to and from
+
+db.messages.aggregate([ {$unwind: "$headers.To"}, 
+						{$group: {_id: {from: "$headers.From", id: "$_id"}, "TO" :{"$addToSet": "$headers.To"}} } , 
+						{$unwind: "$TO"}, 
+						{$group :{_id :{"from":"$_id.from","to":"$TO"}, count:{$sum:1}}} ,
+						{$sort:{count:-1}},
+						{$limit:6}])
+
+      "result" : [
+              {
+                      "_id" : {
+                              "from" : "susan.mara@enron.com",
+                              "to" : "jeff.dasovich@enron.com"
+                      },
+                      "count" : 750
+              },
+              {
+                      "_id" : {
+                              "from" : "soblander@carrfut.com",
+                              "to" : "soblander@carrfut.com"
+                      },
+                      "count" : 679
+              },
+              {
+                      "_id" : {
+                              "from" : "susan.mara@enron.com",
+                              "to" : "james.steffes@enron.com"
+                      },
+                      "count" : 646
+              },
+              {
+                      "_id" : {
+                              "from" : "susan.mara@enron.com",
+                              "to" : "richard.shapiro@enron.com"
+                      },
+                      "count" : 616
+              },
+              {
+                      "_id" : {
+                              "from" : "evelyn.metoyer@enron.com",
+                              "to" : "kate.symes@enron.com"
+                      },
+                      "count" : 567
+              },
+              {
+                      "_id" : {
+                              "from" : "susan.mara@enron.com",
+                              "to" : "karen.denne@enron.com"
+                      },
+                      "count" : 552
+              }
+      ],
+      "ok" : 1
+}
+Q3 DONE
+db.messages.update({"headers.Message-ID":"<8147308.1075851042335.JavaMail.evans@thyme>"}, {$push:{"headers.To": "mrpotatohead@10gen.com"}})
+
+Q4 DONE 
+983nf93ncafjn20fn10f
+  
+
+Q5 :a_1_b_1 & c_1 DONE
+
+Q6 DONE
+B D
+Indexes slow down inserts-> they are used to speed up reads..after every insertion the indexes need to be updated
+a) wrong adding index will furter slow down
+b) will help, no order to maintain
+c)even if u hint not to use an index using inserts anyway the indexes will be updated hence time consuming
+d) w=0, j=0 means that no ack will be received post a write and no sidk confirmation--> this means all writes queue up until processed. 
+e) replicating might not help because in replication the data will be mirrored on all the replicas hence more time in writes 
+
+Q7 44787 DONE OPTION D
+BEFORE REMOVING ORPHAN IMAGES
+ db.image.aggregate([{$match:{ tags:{$in:['sunrises']}}}, {$group :{_id:1, count:{$sum:1}}}])
+ "result" : [ { "_id" : 1, "count" : 49887 } ], "ok" : 1 }
+ 
+ need to remvoe 10263 docs
+ 
+ 
+Q8: DONE 1 (option b)
+
+Q9 DONE
+need to find the shard key ANSWER A
+a) patient_id: all the docs for a patient wiill key on one shard..--> efficinet for search and insert as everytime hit only only shard 
+b) _id: not efficient
+c) doctor name-> not necessarily required because sys is ok with inefficient operations to do research on diseases and grp of ppl
+d) date and time--> monotonically increasing bad choice
+e) patient first name: not present in record collection -> this is present in patient collection
+f) patient last name: same as above
+
+Q10 DONE
+a b d
